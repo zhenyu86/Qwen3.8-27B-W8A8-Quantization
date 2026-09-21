@@ -15,6 +15,13 @@ SGLang        : 0.5.12+g9a3a3e5f9
 GPU           : Hygon K100AI, 每卡约 64 GB
 ```
 
+补充说明：
+
+- Python 是系统解释器 `/usr/bin/python`，包安装在 `/usr/local/lib/python3.10/dist-packages`，**没有使用 conda**。
+- 机器共 8 张 K100AI，实测固定使用 `4,5,6,7` 四张卡做 TP=4 推理；量化校准只用其中一张。
+- PyTorch 由 Hygon DTK 提供（DTK 位于 `/opt/dtk`），`torch.version.hip` 有值、`torch.version.cuda` 为 `None`。
+- 驱动/监控工具：`/opt/dtk/bin/rocm-smi`、`/opt/hyhal/bin/hy-smi`。
+
 重要约束：
 
 - 不重新安装 torch、triton、sglang、torchvision、DTK
@@ -38,12 +45,8 @@ GPU           : Hygon K100AI, 每卡约 64 GB
 ## 依赖检查
 
 ```bash
-python - <<'PY'
-import torch, transformers, safetensors, sglang
-print('torch', torch.__version__, 'hip', torch.version.hip)
-print('transformers', transformers.__version__)
-print('safetensors', safetensors.__version__)
-print('sglang', sglang.__version__)
-PY
+python scripts/check_env.py
 ```
 
+该脚本同时检查依赖版本、GPU、模型目录、校准数据和磁盘空间，只读执行，不安装任何东西。
+安装步骤、路径约定和常见问题见 [SETUP.md](SETUP.md)。

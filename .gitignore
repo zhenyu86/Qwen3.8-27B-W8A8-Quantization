@@ -1,0 +1,8 @@
+# Python
+__pycache__/
+*.py[cod]
+
+# 本地临时产物
+.venv/
+venv/
+*.log.tmp

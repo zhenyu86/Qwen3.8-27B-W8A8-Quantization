@@ -1,0 +1,12 @@
+# 项目运行时依赖。
+#
+# 注意：torch / torchvision / triton / sglang 以及 DTK 由 Hygon 环境提供，
+# 故意不写在这里，避免 pip 覆盖掉能正常工作的定制版本。
+# 环境自检与说明见 docs/SETUP.md 和 scripts/check_env.py。
+transformers>=5.6.0
+safetensors>=0.8.0
+accelerate>=1.14.0
+datasets>=4.8.4
+compressed-tensors>=0.15.0
+requests
+numpy

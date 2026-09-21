@@ -14,6 +14,8 @@
 ```text
 Qwen3.8-27B-W8A8-Quantization/
 ├── README.md
+├── requirements.txt
+├── setup.sh
 ├── docs/
 │   ├── SETUP.md
 │   ├── QUANTIZATION_METHOD.md
@@ -22,6 +24,7 @@ Qwen3.8-27B-W8A8-Quantization/
 │   ├── RESULTS.md
 │   └── ENVIRONMENT.md
 ├── scripts/
+│   ├── check_env.py
 │   ├── quantize.py
 │   ├── calibrate.py
 │   ├── eval_ppl.py
@@ -39,6 +42,13 @@ Qwen3.8-27B-W8A8-Quantization/
 ```
 
 ## 快速使用
+
+环境自检（只读，不安装任何东西）：
+
+```bash
+python scripts/check_env.py      # 依赖版本 + GPU + 模型 + 数据 + 磁盘
+./setup.sh                       # 解释器/驱动信息，缺依赖时用 ./setup.sh --install
+```
 
 量化命令：
 
@@ -70,7 +80,7 @@ HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server \
 
 详细说明见：
 
-- [环境配置教程](docs/SETUP.md) ⬅️ **新文档**
+- [环境配置教程](docs/SETUP.md)
 - [量化方法](docs/QUANTIZATION_METHOD.md)
 - [使用方法](docs/USAGE.md)
 - [启动方法](docs/STARTUP.md)
@@ -105,4 +115,3 @@ Activation-aware GPTQ Learned Rounding
 | Logits KLD | - | 0.00061 |
 | Top-1 agreement | - | 98.05% |
 | 模型大小 | 51.75 GB | 29.09 GB |
-
