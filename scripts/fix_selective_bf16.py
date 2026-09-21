@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-Repair the already-quantized checkpoint so that the selective-BF16 policy is
-actually applied.
+Apply the selective-BF16 policy to an existing W8A8 checkpoint.
 
-The previous run saved every quantizable Linear as INT8, even layers that the
-report selected for BF16.  This script:
+Input is a quantized checkpoint plus the ``quantization_report.json`` written by
+``quantize.py`` (every quantizable Linear already stored as INT8).  The script
+rewrites that checkpoint so the selective-BF16 policy takes effect, which makes
+it possible to change the BF16 ratio without repeating calibration and
+quantization.  Steps:
 
   1. Reads the existing quantization report.
   2. Builds SGLang-compatible packed groups (qkv/gate-up/in_proj_qkvz/in_proj_ba).

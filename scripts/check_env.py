@@ -121,7 +121,7 @@ def check_gpu(problems: list[str], warnings: list[str]) -> None:
     for index in range(device_count):
         props = torch.cuda.get_device_properties(index)
         total = getattr(props, "total_memory", None)
-        if total is None:  # 旧版 torch 的属性名
+        if total is None:  # 部分 torch 版本使用 total_mem 作为属性名
             total = getattr(props, "total_mem", 0)
         print(f"  - cuda:{index} {props.name} {total / 1024**3:.1f} GB")
 

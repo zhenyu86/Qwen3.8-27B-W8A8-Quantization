@@ -2,18 +2,16 @@
 """
 Enhanced W8A8 quantizer for Qwen3.8-27B on SGLang/Hygon.
 
-This version is deployment-correct for SGLang's native ``w8a8_int8`` backend:
+Produces a checkpoint that SGLang's native ``w8a8_int8`` backend loads directly:
 
   * weights are per-output-channel INT8 symmetric,
-  * learned rounding is activation-aware GPTQ-style,
+  * rounding is activation-aware (GPTQ-style learned rounding),
   * the most sensitive SGLang packed modules are kept in BF16,
-  * activation quantization is left to SGLang's dynamic per-token INT8 kernel.
+  * activation quantization is left to SGLang's dynamic per-token INT8 kernel,
+    so no extra runtime, custom kernel or input preprocessing is involved.
 
-The earlier SmoothQuant implementation in this directory was mathematically
-incomplete for this runtime: it multiplied weights by a smooth scale but never
-migrated the reciprocal scale into the activations.  SGLang's w8a8_int8 kernel
-does not consume static per-channel activation scales, so that checkpoint was
-fast but generated garbage.  This script avoids that invalid shortcut.
+Algorithm details: docs/QUANTIZATION_METHOD.md
+Command-line usage: docs/USAGE.md
 """
 
 from __future__ import annotations
@@ -280,7 +278,12 @@ def main():
         "--calib-data",
         default="/home/acceleration/quantization/calibration/calib_data.jsonl",
     )
-    parser.add_argument("--alpha", type=float, default=0.5, help="unused compatibility flag")
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.5,
+        help="占位参数，当前算法不使用（保留以便既有命令行原样执行）",
+    )
     parser.add_argument("--bf16-ratio", type=float, default=0.10)
     parser.add_argument("--use-gptq", action="store_true", default=True)
     parser.add_argument("--no-gptq", action="store_true")

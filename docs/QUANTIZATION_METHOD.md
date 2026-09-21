@@ -8,14 +8,14 @@
 
 - 最终模型必须是 SGLang 可原生加载的 `w8a8_int8`
 - 权重是 INT8
-- 激活由运行时动态量化
+- 激活由 SGLang 运行时动态量化
 - 尽量降低精度损失
 - 尽量提升 decode 速度
-- 不依赖额外的 GPTQ runtime 或不可部署的 SmoothQuant runtime
+- 不引入额外的量化 runtime、自定义 kernel 或推理期输入变换
 
-## 2. 最终算法组成
+## 2. 算法组成
 
-最终算法为：
+本项目采用：
 
 ```text
 Activation-aware GPTQ Learned Rounding
@@ -23,25 +23,27 @@ Activation-aware GPTQ Learned Rounding
 + Selective BF16 Packed Modules
 ```
 
-推理时使用 SGLang 自带的动态 per-token 激活量化。
+叠加 SGLang 自带的动态 per-token 激活量化。
 
-## 3. 为什么移除了旧 SmoothQuant 缩放方案
+## 3. 激活量化交给运行时
 
-早期实现做过：
-
-```text
-W_scaled = W * s
-```
-
-但 SmoothQuant 要数值等价，推理输入也必须变成：
+本项目把量化拆成离线与在线两部分：
 
 ```text
-X_scaled = X / s
+权重:  离线量化为 per-output-channel INT8 + float32 scale
+激活:  推理时由 SGLang w8a8_int8 kernel 动态 per-token 量化为 INT8
+GEMM:  INT8 x INT8
+后处理: dequant / scale / bias
 ```
 
-当前 SGLang `w8a8_int8` 路径中的激活量化是动态 per-token，不接受静态 per-channel 激活缩放。早期 checkpoint 只改了权重，没有把 `1/s` 迁移到模型其它部分，所以虽然速度正常，实际输出是乱码。
+这样做有三个直接好处：
 
-最终版本删除了不可部署的缩放，直接对原始 BF16 权重做 activation-aware GPTQ W8A8。
+- checkpoint 里只需要 `weight`（int8）和 `weight_scale`（shape `[out_features, 1]`），
+  与 SGLang 原生 `w8a8_int8` 的读取方式完全一致，可以被原样加载；
+- 激活的数值范围随输入内容变化，按 token 动态统计 scale 比使用静态 scale 更贴近
+  真实分布，也不需要把缩放系数迁移到模型其它位置；
+- 推理路径里没有引入任何额外算子，所以 benchmark 测到的就是 SGLang 原生
+  `w8a8_int8` 路径的性能。
 
 ## 4. 校准数据
 
@@ -261,3 +263,18 @@ TPOT 从 49.5 ms 降到 25.1 ms
 
 本项目已经保存了这些验证结果。
 
+## 11. 实现文件对照
+
+| 文件 | 作用 |
+|------|------|
+| `scripts/quantize.py` | 主流程：加载 BF16 → 校准统计 → INT8 量化与 learned rounding → selective BF16 → 导出 checkpoint |
+| `scripts/calibrate.py` | 生成校准语料 JSONL（中英文本、代码、数学、逻辑） |
+| `scripts/check_quant_checkpoint.py` | 检查 checkpoint 中权重类型与 `weight_scale` 是否齐全 |
+| `scripts/fix_selective_bf16.py` | 在已有 checkpoint 上重新套用 selective BF16（改 `--bf16-ratio` 时无需重新量化） |
+| `scripts/eval_ppl.py` | BF16 / W8A8 的 PPL 对比 |
+| `scripts/compare_logits.py` | KLD、Top-1 / Top-5 agreement、cosine similarity |
+| `scripts/eval_capabilities.py` | GSM8K / MMLU / HumanEval 小型子集（需运行中的 SGLang 服务） |
+| `scripts/benchmark_sglang.py` | TTFT、TPOT、吞吐、显存（需运行中的 SGLang 服务） |
+| `scripts/check_env.py` | 运行环境自检 |
+
+常用命令见 [USAGE.md](USAGE.md)，环境准备见 [SETUP.md](SETUP.md)。

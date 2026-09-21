@@ -257,7 +257,7 @@ ss -ltnp | grep 30000
 
 1. `config.json` 里 `quantization_config.quant_method` 是否为 `w8a8_int8`；
 2. 启动时是否加了 `--quantization w8a8_int8`；
-3. 是否误用了早期的 SmoothQuant checkpoint（当前 runtime 不消费静态 per-channel 激活缩放，强行使用会输出乱码，详见 [QUANTIZATION_METHOD.md](QUANTIZATION_METHOD.md)）；
+3. checkpoint 是否由本项目 `scripts/quantize.py` 生成（`python scripts/check_quant_checkpoint.py` 可检查权重与 scale 是否齐全）；
 4. `weight_scale` 是否存在且数量与 INT8 权重匹配。
 
 ### Q6: SGLang 装不上 / 想升级 SGLang

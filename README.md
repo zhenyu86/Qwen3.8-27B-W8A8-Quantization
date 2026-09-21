@@ -78,31 +78,36 @@ HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server \
   --quantization w8a8_int8
 ```
 
-详细说明见：
+## 文档导航
 
-- [环境配置教程](docs/SETUP.md)
-- [量化方法](docs/QUANTIZATION_METHOD.md)
-- [使用方法](docs/USAGE.md)
-- [启动方法](docs/STARTUP.md)
-- [结果对比](docs/RESULTS.md)
-- [环境信息](docs/ENVIRONMENT.md)
+建议按下面的顺序阅读：
 
-## 最终方法摘要
+| 文档 | 内容 |
+|------|------|
+| [环境配置教程](docs/SETUP.md) | 硬件/软件要求、环境自检、端到端验证步骤、常见问题 |
+| [环境信息](docs/ENVIRONMENT.md) | 实测版本清单、路径约定、环境约束 |
+| [量化方法](docs/QUANTIZATION_METHOD.md) | 算法组成、校准统计、INT8 量化、selective BF16、导出格式 |
+| [使用方法](docs/USAGE.md) | 量化、评估、测速的命令与参数说明 |
+| [启动方法](docs/STARTUP.md) | BF16 基线与 W8A8 模型的 SGLang 启动命令 |
+| [结果对比](docs/RESULTS.md) | 精度、能力子集、性能与模型大小对比 |
 
-本项目最终采用：
+## 方法摘要
+
+本项目采用：
 
 ```text
 Activation-aware GPTQ Learned Rounding
 + Per-output-channel INT8 Weight Quantization
-+ SGLang W8A8 Dynamic Per-token Activation Quantization
 + Packed-group Selective BF16 Sensitive Modules
++ SGLang 运行时动态 per-token 激活量化
 ```
 
-最终运行时格式是标准 SGLang `w8a8_int8`。
+量化在离线完成，只处理权重；激活的量化交给 SGLang 运行时按 token 动态完成。
+导出的 checkpoint 是标准 SGLang `w8a8_int8` 格式，用 SGLang 原生加载路径和原生
+kernel 即可运行，不需要额外的量化 runtime、自定义算子，也不需要改动推理输入。
+算法细节见[量化方法](docs/QUANTIZATION_METHOD.md)。
 
-早期不可部署的 SmoothQuant 权重缩放方案已经移除，原因是当前 SGLang `w8a8_int8` kernel 不消费静态 per-channel 激活缩放，强行使用会导致模型输出错误。
-
-## 最终结果摘要
+## 结果摘要
 
 | 指标 | BF16 | Enhanced W8A8 |
 |---|---:|---:|

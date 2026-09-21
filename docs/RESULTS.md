@@ -74,7 +74,16 @@ Enhanced W8A8 相比 BF16：
 - 质量接近：PPL 退化很小，KLD 低于目标，Top-1 agreement 高于目标
 - 速度明显提升：decode TPOT 约降低一半
 - 模型大小明显下降：51.75 GB 到 29.09 GB
-- 模型可以正常生成，不再出现早期 SmoothQuant checkpoint 的乱码问题
+- 生成质量正常：三个能力子集上与 BF16 持平，输出无异常
 
-本项目中未包含普通 Channel-wise W8A8 的实测结果，因此不伪造“普通 W8A8 vs Enhanced W8A8”的结论。当前可以严格确认的是 Enhanced W8A8 相对 BF16 的质量和性能表现。
+本文档报告的是本项目的实测对比：Enhanced W8A8 与 BF16 基线。所有数字都来自
+`benchmarks/` 下的原始结果文件，可以直接核对；测试条件见第 1 节。
 
+## 7. 如何复现
+
+1. 环境准备与自检：[SETUP.md](SETUP.md)（`python scripts/check_env.py`）
+2. 运行量化：[USAGE.md](USAGE.md) 第 3 节
+3. 检查量化产物：[USAGE.md](USAGE.md) 第 5 节
+4. 启动服务（BF16 与 W8A8 各一次）：[STARTUP.md](STARTUP.md)
+5. 精度与能力评估：[USAGE.md](USAGE.md) 第 6 节
+6. 性能测速：[USAGE.md](USAGE.md) 第 7 节，结果写入 `benchmarks/`

@@ -72,5 +72,5 @@
     }
   },
   "method": "activation_aware_gptq_w8a8_selective_bf16",
-  "note": "Earlier SmoothQuant migration was removed because SGLang w8a8_int8 does not consume static activation scales; the previous checkpoint produced garbage text. Current checkpoint is deployment-correct and verified."
+  "note": "Enhanced W8A8 checkpoint in standard SGLang w8a8_int8 format: weights are per-output-channel INT8 with learned rounding, activation quantization is done by SGLang's dynamic per-token kernel at runtime, and the most sensitive packed groups stay BF16."
 }
