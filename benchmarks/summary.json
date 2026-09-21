@@ -1,0 +1,76 @@
+{
+  "rows": [
+    {
+      "model": "Qwen3.8-27B-BF16",
+      "quant_method": "bf16",
+      "int8_coverage": "0.0",
+      "bf16_layers": "0",
+      "smoothquant_alpha": "",
+      "calibration_samples": "",
+      "KLD": "",
+      "top1_agreement": "",
+      "PPL": "1.6429656051242674",
+      "GSM8K": "0.95",
+      "MMLU": "1.0",
+      "code_score": "1.0",
+      "TTFT": "431.93578720092773",
+      "TPOT": "49.49823017993004",
+      "single_user_tok_s": "58.83205534353138",
+      "concurrency4_tok_s": "225.76338253075264",
+      "concurrency8_tok_s": "386.17116997646116",
+      "GPU_memory_GB": "187.0",
+      "model_size_GB": "51.75"
+    },
+    {
+      "model": "Qwen3.8-27B-Enhanced-W8A8",
+      "quant_method": "enhanced_w8a8",
+      "int8_coverage": "0.89738430583501",
+      "bf16_layers": "51",
+      "smoothquant_alpha": "",
+      "calibration_samples": "128",
+      "KLD": "0.0006104447821826398",
+      "top1_agreement": "0.98046875",
+      "PPL": "1.6479519041551738",
+      "GSM8K": "0.95",
+      "MMLU": "1.0",
+      "code_score": "1.0",
+      "TTFT": "362.9167874654134",
+      "TPOT": "25.108408148771797",
+      "single_user_tok_s": "113.51309010258171",
+      "concurrency4_tok_s": "372.03344076615906",
+      "concurrency8_tok_s": "655.4159433905751",
+      "GPU_memory_GB": "188.0",
+      "model_size_GB": "29.09"
+    }
+  ],
+  "conclusion": {
+    "bf16": {
+      "ttft_ms": "431.93578720092773",
+      "tpot_ms": "49.49823017993004",
+      "single_user_tok_s": "58.83205534353138",
+      "concurrency4_tok_s": "225.76338253075264",
+      "concurrency8_tok_s": "386.17116997646116",
+      "ppl": "1.6429656051242674",
+      "gsm8k": "0.95",
+      "mmlu": "1.0",
+      "code_score": "1.0",
+      "model_size_gb": "51.75"
+    },
+    "enhanced_w8a8": {
+      "ttft_ms": "362.9167874654134",
+      "tpot_ms": "25.108408148771797",
+      "single_user_tok_s": "113.51309010258171",
+      "concurrency4_tok_s": "372.03344076615906",
+      "concurrency8_tok_s": "655.4159433905751",
+      "kld": "0.0006104447821826398",
+      "top1_agreement": "0.98046875",
+      "ppl": "1.6479519041551738",
+      "gsm8k": "0.95",
+      "mmlu": "1.0",
+      "code_score": "1.0",
+      "model_size_gb": "29.09"
+    }
+  },
+  "method": "activation_aware_gptq_w8a8_selective_bf16",
+  "note": "Earlier SmoothQuant migration was removed because SGLang w8a8_int8 does not consume static activation scales; the previous checkpoint produced garbage text. Current checkpoint is deployment-correct and verified."
+}

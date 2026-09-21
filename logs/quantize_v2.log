@@ -1,0 +1,117 @@
+[transformers] The fast path is not available because one of the required library is not installed. Falling back to torch implementation. To install follow https://github.com/fla-org/flash-linear-attention#installation and https://github.com/Dao-AILab/causal-conv1d
+============================================================
+Enhanced W8A8 Quantization (Memory-Efficient)
+  Model: /home/weight/Qwen3.8-27B
+  Output: /home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8
+  Alpha: 0.5, BF16 ratio: 0.1, GPTQ: True
+============================================================
+
+Loading calibration data...
+  64 calibration samples
+
+Loading model in BF16...
+Loading weights:   0%|          | 0/851 [00:00<?, ?it/s]Loading weights:   0%|          | 1/851 [00:00<10:30,  1.35it/s]Loading weights:   2%|▏         | 14/851 [00:00<00:39, 21.29it/s]Loading weights:   3%|▎         | 26/851 [00:01<00:22, 36.54it/s]Loading weights:   4%|▍         | 35/851 [00:01<00:17, 45.61it/s]Loading weights:   5%|▌         | 43/851 [00:01<00:21, 37.60it/s]Loading weights:   7%|▋         | 63/851 [00:01<00:14, 54.26it/s]Loading weights:   9%|▉         | 75/851 [00:01<00:13, 58.27it/s]Loading weights:  11%|█         | 93/851 [00:02<00:13, 57.83it/s]Loading weights:  14%|█▎        | 117/851 [00:02<00:10, 71.82it/s]Loading weights:  15%|█▌        | 130/851 [00:02<00:09, 72.10it/s]Loading weights:  17%|█▋        | 142/851 [00:02<00:09, 72.66it/s]Loading weights:  18%|█▊        | 151/851 [00:02<00:10, 67.17it/s]Loading weights:  20%|██        | 173/851 [00:03<00:08, 83.01it/s]Loading weights:  22%|██▏       | 183/851 [00:03<00:08, 75.56it/s]Loading weights:  24%|██▎       | 200/851 [00:03<00:09, 68.05it/s]Loading weights:  26%|██▌       | 219/851 [00:03<00:08, 72.25it/s]Loading weights:  28%|██▊       | 236/851 [00:03<00:07, 77.78it/s]Loading weights:  30%|██▉       | 253/851 [00:04<00:08, 68.52it/s]Loading weights:  33%|███▎      | 278/851 [00:04<00:06, 86.68it/s]Loading weights:  34%|███▍      | 288/851 [00:04<00:07, 72.78it/s]Loading weights:  36%|███▌      | 305/851 [00:04<00:08, 65.89it/s]Loading weights:  39%|███▊      | 328/851 [00:05<00:06, 77.05it/s]Loading weights:  41%|████      | 345/851 [00:05<00:06, 81.48it/s]Loading weights:  42%|████▏     | 360/851 [00:05<00:07, 69.88it/s]Loading weights:  45%|████▍     | 381/851 [00:05<00:06, 76.71it/s]Loading weights:  47%|████▋     | 398/851 [00:06<00:05, 79.57it/s]Loading weights:  48%|████▊     | 410/851 [00:06<00:06, 65.45it/s]Loading weights:  51%|█████     | 433/851 [00:06<00:05, 74.76it/s]Loading weights:  52%|█████▏    | 446/851 [00:06<00:05, 74.35it/s]Loading weights:  54%|█████▍    | 461/851 [00:06<00:05, 76.69it/s]Loading weights:  55%|█████▌    | 470/851 [00:07<00:05, 73.85it/s]Loading weights:  57%|█████▋    | 487/851 [00:07<00:04, 75.99it/s]Loading weights:  59%|█████▉    | 503/851 [00:07<00:03, 90.22it/s]Loading weights:  60%|██████    | 514/851 [00:07<00:03, 90.58it/s]Loading weights:  62%|██████▏   | 524/851 [00:07<00:05, 61.66it/s]Loading weights:  64%|██████▎   | 542/851 [00:08<00:04, 75.90it/s]Loading weights:  65%|██████▍   | 552/851 [00:08<00:04, 65.23it/s]Loading weights:  67%|██████▋   | 566/851 [00:08<00:03, 78.43it/s]Loading weights:  68%|██████▊   | 576/851 [00:08<00:03, 71.32it/s]Loading weights:  70%|██████▉   | 592/851 [00:08<00:03, 85.48it/s]Loading weights:  71%|███████   | 602/851 [00:08<00:03, 78.33it/s]Loading weights:  72%|███████▏  | 611/851 [00:09<00:03, 66.66it/s]Loading weights:  73%|███████▎  | 625/851 [00:09<00:03, 65.66it/s]Loading weights:  74%|███████▍  | 633/851 [00:09<00:03, 64.12it/s]Loading weights:  76%|███████▌  | 647/851 [00:09<00:02, 69.51it/s]Loading weights:  77%|███████▋  | 659/851 [00:09<00:02, 77.49it/s]Loading weights:  79%|███████▉  | 672/851 [00:09<00:02, 60.72it/s]Loading weights:  81%|████████  | 686/851 [00:10<00:02, 69.70it/s]Loading weights:  82%|████████▏ | 702/851 [00:10<00:01, 80.03it/s]Loading weights:  84%|████████▍ | 713/851 [00:10<00:02, 67.07it/s]Loading weights:  86%|████████▌ | 729/851 [00:10<00:02, 59.70it/s]Loading weights:  88%|████████▊ | 752/851 [00:11<00:01, 72.57it/s]Loading weights:  90%|████████▉ | 765/851 [00:11<00:01, 76.35it/s]Loading weights:  92%|█████████▏| 780/851 [00:11<00:00, 83.91it/s]Loading weights:  93%|█████████▎| 790/851 [00:11<00:00, 69.39it/s]Loading weights:  94%|█████████▍| 804/851 [00:11<00:00, 65.45it/s]Loading weights:  97%|█████████▋| 822/851 [00:11<00:00, 71.83it/s]Loading weights:  98%|█████████▊| 836/851 [00:12<00:00, 77.33it/s]Loading weights:  99%|█████████▉| 845/851 [00:12<00:00, 70.12it/s]Loading weights: 100%|██████████| 851/851 [00:12<00:00, 68.83it/s]
+/usr/local/lib/python3.10/dist-packages/transformers/integrations/sdpa_attention.py:92: UserWarning: sdpa adopt the new interface of flash-attn (Triggered internally at /pytorch/aten/src/ATen/native/transformers/hip/cutlassfa_adapter.h:148.)
+  attn_output = torch.nn.functional.scaled_dot_product_attention(
+  Model loaded on cuda:0
+  GPU memory: 50.1 GB allocated
+  497 linear layers
+
+Step 1: Collecting activations (GPU forward pass)...
+  Collected 497 layer activations
+  GPU memory after calibration: 50.1 GB
+  Moving model to CPU to free GPU for quantization...
+  GPU memory after CPU move: 0.0 GB
+
+Step 2: Quantizing layers (CPU)...
+  [1/497] model.layers.0.linear_attn.out_proj: KLD=0.000000 cos=1.0003 [1.0 layers/s, ETA 519s]
+  [50/497] model.layers.6.linear_attn.in_proj_z: KLD=0.000000 cos=1.0001 [0.7 layers/s, ETA 662s]
+  [100/497] model.layers.12.mlp.up_proj: KLD=0.000031 cos=1.0002 [0.7 layers/s, ETA 602s]
+  [150/497] model.layers.19.self_attn.k_proj: KLD=0.000000 cos=1.0000 [0.7 layers/s, ETA 533s]
+  [200/497] model.layers.25.mlp.gate_proj: KLD=0.000278 cos=1.0001 [0.7 layers/s, ETA 456s]
+  [250/497] model.layers.32.linear_attn.in_proj_qkv: KLD=0.000000 cos=1.0001 [0.6 layers/s, ETA 382s]
+  [300/497] model.layers.38.linear_attn.in_proj_a: KLD=0.000000 cos=1.0000 [0.6 layers/s, ETA 307s]
+  [350/497] model.layers.45.linear_attn.out_proj: KLD=0.000074 cos=1.0000 [0.6 layers/s, ETA 231s]
+  [400/497] model.layers.51.self_attn.o_proj: KLD=0.000000 cos=1.0000 [0.6 layers/s, ETA 153s]
+  [450/497] model.layers.57.mlp.down_proj: KLD=0.000000 cos=1.0000 [0.6 layers/s, ETA 74s]
+  Quantization done in 802.6s (0.6 layers/s)
+
+Step 3: Selecting BF16 layers...
+  Keeping 49/497 layers in BF16
+    BF16: model.layers.29.mlp.gate_proj KLD=0.001648
+    BF16: model.layers.27.mlp.gate_proj KLD=0.001359
+    BF16: model.layers.32.mlp.gate_proj KLD=0.001199
+    BF16: model.layers.29.mlp.up_proj KLD=0.001156
+    BF16: model.layers.10.linear_attn.in_proj_a KLD=0.001101
+    BF16: model.layers.16.linear_attn.in_proj_a KLD=0.000967
+    BF16: model.layers.18.mlp.gate_proj KLD=0.000943
+    BF16: model.layers.28.mlp.gate_proj KLD=0.000836
+    BF16: model.layers.49.mlp.down_proj KLD=0.000739
+    BF16: model.layers.37.mlp.up_proj KLD=0.000707
+    BF16: model.layers.46.mlp.down_proj KLD=0.000640
+    BF16: model.layers.14.linear_attn.in_proj_a KLD=0.000636
+    BF16: model.layers.36.mlp.up_proj KLD=0.000612
+    BF16: model.layers.2.linear_attn.in_proj_a KLD=0.000548
+    BF16: model.layers.28.mlp.up_proj KLD=0.000547
+    BF16: model.layers.32.mlp.up_proj KLD=0.000539
+    BF16: model.layers.9.linear_attn.in_proj_a KLD=0.000522
+    BF16: model.layers.48.mlp.down_proj KLD=0.000516
+    BF16: model.layers.9.linear_attn.in_proj_b KLD=0.000512
+    BF16: model.layers.1.linear_attn.in_proj_a KLD=0.000500
+    BF16: model.layers.37.mlp.gate_proj KLD=0.000481
+    BF16: model.layers.45.mlp.up_proj KLD=0.000470
+    BF16: model.layers.27.mlp.up_proj KLD=0.000466
+    BF16: model.layers.18.linear_attn.in_proj_a KLD=0.000443
+    BF16: model.layers.18.mlp.up_proj KLD=0.000419
+    BF16: model.layers.36.mlp.gate_proj KLD=0.000405
+    BF16: model.layers.38.mlp.down_proj KLD=0.000400
+    BF16: model.layers.39.mlp.down_proj KLD=0.000376
+    BF16: model.layers.40.mlp.down_proj KLD=0.000352
+    BF16: model.layers.24.mlp.up_proj KLD=0.000336
+    BF16: model.layers.25.mlp.up_proj KLD=0.000289
+    BF16: model.layers.25.mlp.gate_proj KLD=0.000278
+    BF16: model.layers.24.mlp.gate_proj KLD=0.000275
+    BF16: model.layers.8.linear_attn.in_proj_a KLD=0.000274
+    BF16: model.layers.47.self_attn.o_proj KLD=0.000269
+    BF16: model.layers.44.mlp.down_proj KLD=0.000264
+    BF16: model.layers.43.mlp.down_proj KLD=0.000262
+    BF16: model.layers.45.mlp.down_proj KLD=0.000243
+    BF16: model.layers.49.linear_attn.out_proj KLD=0.000239
+    BF16: model.layers.24.mlp.down_proj KLD=0.000236
+    BF16: model.layers.43.self_attn.o_proj KLD=0.000211
+    BF16: model.layers.37.mlp.down_proj KLD=0.000203
+    BF16: model.layers.42.mlp.down_proj KLD=0.000200
+    BF16: model.layers.22.mlp.up_proj KLD=0.000194
+    BF16: model.layers.36.linear_attn.out_proj KLD=0.000192
+    BF16: model.layers.41.mlp.down_proj KLD=0.000189
+    BF16: model.layers.8.linear_attn.in_proj_b KLD=0.000180
+    BF16: model.layers.35.self_attn.o_proj KLD=0.000170
+    BF16: model.layers.31.mlp.down_proj KLD=0.000170
+
+  KLD stats: min=0.00000000 max=0.001648 mean=0.000165
+
+Step 4: Saving quantized model...
+  Building state dict...
+    Loading model-00001-of-00018.safetensors...
+    Loading model-00002-of-00018.safetensors...
+    Loading model-00003-of-00018.safetensors...
+    Loading model-00004-of-00018.safetensors...
+    Loading model-00005-of-00018.safetensors...
+    Loading model-00006-of-00018.safetensors...
+    Loading model-00007-of-00018.safetensors...
+    Loading model-00008-of-00018.safetensors...
+    Loading model-00009-of-00018.safetensors...
+    Loading model-00010-of-00018.safetensors...
+    Loading model-00011-of-00018.safetensors...
+    Loading model-00012-of-00018.safetensors...
+    Loading model-00013-of-00018.safetensors...
+    Loading model-00014-of-00018.safetensors...
+    Loading model-00015-of-00018.safetensors...
+    Loading model-00016-of-00018.safetensors...
+    Loading model-00017-of-00018.safetensors...
+    Loading model-00018-of-00018.safetensors...
+  Saved 14 shards
+  448 INT8 layers, 49 BF16 layers
+  Report: /home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8/quantization_report.json
+
+Done!

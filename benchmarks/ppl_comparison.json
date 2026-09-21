@@ -1,0 +1,9 @@
+{
+  "bf16_model": "/home/weight/Qwen3.8-27B",
+  "quant_model": "/home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8",
+  "num_samples": 32,
+  "max_length": 512,
+  "bf16_ppl": 1.6429656051242674,
+  "w8a8_ppl": 1.6479519041551738,
+  "ppl_degradation": 0.004986299030906416
+}

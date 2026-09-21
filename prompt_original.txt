@@ -1,0 +1,1229 @@
+你现在是一名大模型量化算法、PyTorch、Hygon K100AI、DTK、SGLang、ROCm/HIP 性能优化专家。
+
+这不是一个普通“把模型量化成功”的任务。
+
+我的目标是：
+
+**基于我自己的 Qwen3.8-27B BF16 模型，制作一个针对 Hygon K100AI 优化的高性能 W8A8 模型，并通过实际 benchmark 证明它相对于普通 Channel-wise INT8 W8A8 方案在精度和推理性能上具有优势。**
+
+不要只追求“能跑”。
+
+必须追求：
+
+1. 精度损失尽可能低；
+2. K100AI 推理速度尽可能高；
+3. 显存明显降低；
+4. 保持 SGLang TP4 正常运行；
+5. 最终必须使用实测数据说话。
+
+# 1. 我的现有环境
+
+我的大模型已经能够在当前环境正常运行。
+
+不要重新安装：
+
+torch
+sglang
+triton
+torchvision
+DTK
+
+也不要新建 conda 环境。
+
+直接使用当前 Python 环境。
+
+如果量化过程中缺少：
+
+datasets
+accelerate
+safetensors
+transformers
+compressed-tensors
+llm-compressor
+gptqmodel
+
+或者其他纯 Python 量化依赖，可以自行安装。
+
+但是：
+
+**禁止因为安装量化包而升级、降级或者替换现有 torch、triton、sglang。**
+
+安装任何 Python 包前检查依赖。
+
+如果 pip 将修改：
+
+torch
+triton
+sglang
+torchvision
+
+则必须使用：
+
+--no-deps
+
+或者手工安装必要依赖。
+
+当前推理环境已经工作正常，不允许破坏。
+
+# 2. 模型路径
+
+原始模型：
+
+/home/weight/Qwen3.8-27B/
+
+这个模型是正确可运行的 BF16 基线。
+
+绝对禁止：
+
+修改
+覆盖
+删除
+移动
+
+/home/weight/Qwen3.8-27B/
+
+里面的任何文件。
+
+# 3. 工作目录
+
+所有量化相关文件只能放到：
+
+/home/acceleration/quantization/
+
+包括：
+
+代码
+第三方仓库
+校准数据
+缓存
+临时文件
+日志
+benchmark
+量化模型
+
+创建：
+
+/home/acceleration/quantization/scripts/
+
+/home/acceleration/quantization/logs/
+
+/home/acceleration/quantization/calibration/
+
+/home/acceleration/quantization/benchmarks/
+
+/home/acceleration/quantization/tmp/
+
+最终模型保存到：
+
+/home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8/
+
+# 4. 当前已经验证成功的 BF16 启动命令
+
+这是我的基准环境：
+
+HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server 
+--model-path /home/weight/Qwen3.8-27B 
+--host 0.0.0.0 
+--port 30000 
+--tp-size 4 
+--page-size 64 
+--disable-radix-cache
+
+这个命令已经能够运行。
+
+所以：
+
+不要质疑硬件环境；
+不要重新配置 SGLang；
+不要让我重新安装 DTK；
+不要重新搭建环境。
+
+直接在当前环境工作。
+
+量化后的测试也统一使用：
+
+HIP_VISIBLE_DEVICES=4,5,6,7
+
+TP=4。
+
+这样保证 BF16 和量化模型 benchmark 公平。
+
+# 5. 本次采用的核心量化算法
+
+不要采用普通的：
+
+INT8 RTN
+单纯 per-channel INT8
+单纯 SmoothQuant RTN
+
+本次采用：
+
+================================================
+
+Enhanced W8A8
+
+SmoothQuant
++
+Activation-aware GPTQ Learned Rounding
++
+Selective BF16 Sensitive Layers
+
+================================================
+
+具体：
+
+Weight：
+
+INT8
+
+Activation：
+
+INT8
+
+即：
+
+W8A8 INT8。
+
+# 6. 为什么使用这个方法
+
+普通 Channel-wise W8A8 最大的问题是：
+
+直接 rounding 会造成较大的 weight quantization error。
+
+单纯 SmoothQuant 主要解决 activation outlier，但不能最优解决权重量化误差。
+
+因此：
+
+第一阶段：
+
+使用 SmoothQuant 对 activation distribution 进行平滑。
+
+第二阶段：
+
+使用真实 calibration activation，通过 GPTQ Hessian approximation / activation-aware optimization 对 weight rounding 进行优化。
+
+也就是：
+
+不要简单：
+
+round(W / scale)
+
+而要根据 calibration activation：
+
+X
+
+最小化近似：
+
+||WX - Q(W)X||²
+
+使 INT8 权重在实际 activation distribution 下尽可能接近 BF16 输出。
+
+# 7. 禁止把 GPTQ 理解成 INT4 GPTQ
+
+这里的 GPTQ：
+
+不是：
+
+GPTQ INT4
+
+也不是：
+
+W4A16。
+
+GPTQ 在这里仅作为：
+
+INT8 权重 learned rounding / error minimization 方法。
+
+最终模型仍然必须是：
+
+W8A8 INT8。
+
+# 8. 不使用在线 Rotation
+
+第一版禁止使用：
+
+QuaRot
+SpinQuant
+Hadamard Runtime Rotation
+
+等需要运行时额外算子的方案。
+
+如果 rotation 可以完全 offline fuse，而且不会增加推理 kernel：
+
+才允许作为实验候选。
+
+但是主方案必须：
+
+SmoothQuant
++
+Activation-aware GPTQ
++
+W8A8
+
+原因：
+
+我要的是 K100AI 上真正更快。
+
+不能为了理论精度增加运行时：
+
+rotation kernel
+transpose
+额外 GEMM
+额外 CUDA/HIP kernel。
+
+所有精度优化尽量发生在：
+
+offline quantization。
+
+推理阶段必须尽可能简单。
+
+# 9. 保留敏感层 BF16
+
+不要强制所有 Linear 全部 INT8。
+
+首先统计每层量化误差。
+
+对每个候选 Linear module：
+
+计算：
+
+BF16 output
+
+和
+
+INT8 simulated output
+
+之间的：
+
+MSE
+Cosine Similarity
+Relative Error
+KLD（适用时）
+
+根据误差排序。
+
+允许大约：
+
+5%～15%
+
+最敏感的 Linear 层保持 BF16。
+
+优先检查：
+
+lm_head
+
+embedding
+
+第一层
+
+最后一层
+
+attention output projection
+
+Q/K/V projection
+
+Gated DeltaNet / Linear Attention 特殊 projection
+
+模型中特殊 mixer 模块。
+
+但是：
+
+不要凭经验直接全部排除。
+
+必须先测试误差。
+
+# 10. 自动寻找最佳 BF16 保留比例
+
+至少测试：
+
+0%
+
+5%
+
+10%
+
+三个 selective BF16 配置。
+
+如果时间允许：
+
+增加：
+
+15%。
+
+比较：
+
+模型精度
+模型大小
+prefill speed
+decode speed
+
+寻找 Pareto 最优配置。
+
+不要为了增加 INT8 覆盖率而牺牲明显精度。
+
+# 11. SmoothQuant 参数
+
+不要大范围搜索。
+
+第一阶段测试：
+
+alpha = 0.5
+
+如果结果不理想：
+
+alpha = 0.6
+
+alpha = 0.7
+
+最多三个候选。
+
+不允许搜索几十个 alpha。
+
+根据 activation statistics 判断最佳值。
+
+# 12. Calibration 数据
+
+使用：
+
+512 条 calibration samples。
+
+为了加快第一轮：
+
+先使用：
+
+256 × 2048 tokens。
+
+第一轮通过以后：
+
+最终版本使用：
+
+512 × 2048 tokens。
+
+数据必须混合：
+
+中文自然语言
+英文
+代码
+数学
+逻辑推理
+
+不要全部使用英文 C4。
+
+因为这个模型后续会用于：
+
+中文
+代码
+Agent
+推理。
+
+Calibration 数据必须具有代表性。
+
+# 13. GPTQ参数
+
+INT8 GPTQ 优先：
+
+bits = 8
+
+group_size：
+
+优先测试：
+
+128
+
+如果 K100AI kernel 对 per-channel INT8 支持明显更好，则最终权重格式仍以：
+
+per-channel INT8
+
+为主。
+
+推荐 GPTQ：
+
+blocksize = 128
+
+damp_percent：
+
+0.01
+
+act_order：
+
+首先 False
+
+因为 act-order 可能影响标准 kernel layout。
+
+只有精度明显改善且不会改变 runtime layout 时才开启。
+
+# 14. 非常重要：GPTQ优化后必须重新导出标准W8A8格式
+
+GPTQ只是：
+
+offline weight rounding optimizer。
+
+最终模型不能依赖特殊 GPTQ INT4 runtime。
+
+最终输出仍应尽可能转换成：
+
+标准 INT8 weight
++
+INT8 activation scale
+
+从而让 SGLang 使用：
+
+w8a8_int8
+
+或者当前 Hygon SGLang 中实际存在的 INT8 kernel。
+
+不要因为使用 GPTQ learned rounding，最后让模型走：
+
+GPTQ dequant kernel。
+
+那样违背本任务目标。
+
+# 15. 首先检查当前 SGLang 的实际量化实现
+
+执行：
+
+python - <<'PY'
+import sglang
+print(sglang.**file**)
+PY
+
+得到当前 SGLang 路径。
+
+然后搜索：
+
+grep -R "w8a8_int8" <sglang路径>
+grep -R "slimquant_marlin" <sglang路径>
+grep -R "compressed_tensors" <sglang路径>
+grep -R "W8A8" <sglang路径>
+
+明确：
+
+当前 Hygon SGLang 到底支持：
+
+w8a8_int8
+
+还是：
+
+slimquant_marlin
+
+还是：
+
+compressed-tensors
+
+还是多个都支持。
+
+不要猜。
+
+# 16. Kernel性能优先
+
+最终必须选择：
+
+K100AI 上真正执行 INT8×INT8 GEMM 的 kernel。
+
+不能只看模型 config 写着：
+
+INT8
+
+就认为已经加速。
+
+必须通过：
+
+profiler
+
+源码
+
+日志
+
+或者 kernel trace
+
+验证量化 Linear 实际命中了：
+
+INT8 kernel。
+
+重点检查是否存在：
+
+W8A8 GEMM
+
+INT8 GEMM
+
+Marlin
+
+LightOp
+
+Triton INT8
+
+Hygon custom quantization kernel
+
+相关实现。
+
+# 17. 如果当前SGLang存在多种INT8 backend
+
+如果存在：
+
+w8a8_int8
+
+slimquant_marlin
+
+compressed_tensors
+
+多个 backend，
+
+不要主观选择。
+
+对完全相同模型分别 benchmark。
+
+最终以：
+
+tokens/s
+TTFT
+TPOT
+显存
+
+决定。
+
+# 18. BF16基线必须先测速
+
+正式量化前：
+
+启动：
+
+HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server 
+--model-path /home/weight/Qwen3.8-27B 
+--host 0.0.0.0 
+--port 30000 
+--tp-size 4 
+--page-size 64 
+--disable-radix-cache
+
+运行 benchmark。
+
+记录：
+
+1 request
+
+4 concurrent requests
+
+8 concurrent requests
+
+Prompt 长度：
+
+512
+
+2048
+
+8192
+
+输出：
+
+256 tokens。
+
+记录：
+
+TTFT
+
+TPOT
+
+output tokens/s
+
+total throughput
+
+GPU memory
+
+作为：
+
+BF16_BASELINE。
+
+# 19. 量化后完全相同条件测速
+
+量化模型：
+
+/home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8/
+
+必须：
+
+同4张K100AI
+
+HIP_VISIBLE_DEVICES=4,5,6,7
+
+TP=4
+
+page-size=64
+
+disable-radix-cache
+
+相同：
+
+prompt
+
+input length
+
+output length
+
+concurrency。
+
+不能改变推理参数来制造性能提升。
+
+# 20. “比普通海光量化更快”的定义
+
+如果当前可以获得或者生成普通：
+
+Channel-wise INT8 W8A8
+
+则建立：
+
+HYGON_W8A8_BASELINE。
+
+比较：
+
+BF16
+
+普通 Channel W8A8
+
+Enhanced W8A8
+
+三组结果。
+
+目标：
+
+Enhanced W8A8
+
+推理速度至少：
+
+> = 普通 W8A8
+
+不能因为 GPTQ learned rounding 导致运行时更慢。
+
+如果两个 checkpoint 使用同一 kernel：
+
+速度允许在 ±3% 测试误差范围内视为相同。
+
+这种情况下：
+
+Enhanced W8A8 必须依靠更高精度胜出。
+
+# 21. 精度评价
+
+不要仅仅看几个聊天问题。
+
+至少建立以下三类评价。
+
+## 第一类：Logits Alignment
+
+随机准备 calibration 之外：
+
+128～256 条样本。
+
+比较：
+
+BF16
+
+和：
+
+量化模型。
+
+统计：
+
+Mean KLD
+
+Top-1 agreement
+
+Top-5 agreement
+
+Cosine similarity。
+
+## 第二类：Perplexity
+
+使用固定公开文本子集计算：
+
+BF16 PPL
+
+和：
+
+INT8 PPL。
+
+比较：
+
+PPL degradation。
+
+## 第三类：能力测试
+
+至少测试：
+
+GSM8K
+
+MMLU 或 MMLU-Pro 子集
+
+HumanEval / MBPP 二选一。
+
+如果 OpenCompass 当前已经存在：
+
+优先使用 OpenCompass。
+
+不要为了 benchmark 重新破坏现有环境。
+
+# 22. 精度目标
+
+目标不是绝对保证，但优化目标设为：
+
+Top-1 agreement >= 96%
+
+Mean KLD 尽量：
+
+<= 0.006
+
+如果能够：
+
+<= 0.005
+
+更好。
+
+能力 benchmark：
+
+相对 BF16 最好控制在：
+
+1%以内。
+
+如果某个任务 BF16 本身存在随机波动，要重复测试。
+
+# 23. 自动寻找最优模型
+
+候选：
+
+A：
+
+SmoothQuant RTN W8A8
+
+B：
+
+SmoothQuant + GPTQ W8A8
+
+C：
+
+SmoothQuant + GPTQ W8A8
++
+5% sensitive BF16
+
+D：
+
+SmoothQuant + GPTQ W8A8
++
+10% sensitive BF16
+
+不要全部做完整 benchmark。
+
+首先：
+
+128～256 calibration samples
+
+对 A/B/C/D 做快速 logits benchmark。
+
+淘汰明显较差版本。
+
+然后只对：
+
+最好的两个
+
+进行完整量化和推理 benchmark。
+
+# 24. 模型选择规则
+
+不要简单选择精度最高的。
+
+计算：
+
+Performance / Quality Pareto Frontier。
+
+最终模型必须满足：
+
+相比普通 W8A8：
+
+速度不下降
+
+同时：
+
+KLD更低
+
+或者：
+
+benchmark准确率更接近BF16。
+
+如果某方案：
+
+精度最好
+
+但是推理慢20%
+
+则不能作为最终方案。
+
+# 25. 量化过程自身也要尽量快
+
+GPTQ 不允许做大量迭代优化。
+
+这是 PTQ。
+
+不是训练。
+
+不要：
+
+fine-tuning
+
+不要：
+
+QAT
+
+不要：
+
+backprop整个模型。
+
+GPTQ：
+
+逐层
+逐block
+Hessian approximation
+一次优化
+
+即可。
+
+尽量：
+
+layer-by-layer
+
+stream weights
+
+CPU offload
+
+不要把三份27B权重同时放入显存。
+
+# 26. 安装缺少依赖
+
+如果缺少量化库：
+
+自己安装。
+
+但是首先检查：
+
+pip list。
+
+优先复用已有：
+
+transformers
+datasets
+accelerate
+safetensors
+
+如果需要下载 GitHub 代码：
+
+统一放：
+
+/home/acceleration/quantization/third_party/
+
+如果需要：
+
+git clone
+
+可以直接执行。
+
+不要问我。
+
+# 27. 不允许直接下载别人量化好的模型作为最终结果
+
+可以：
+
+阅读
+参考
+复用开源量化算法代码。
+
+但是最终模型必须来自：
+
+/home/weight/Qwen3.8-27B/
+
+也就是说必须真正对我的本地 BF16 模型执行量化。
+
+不允许：
+
+下载别人已经量化好的 Qwen3.8-27B
+
+然后告诉我量化完成。
+
+# 28. 允许参考已有优秀方案
+
+重点研究：
+
+Qwen3.8-27B
+
+SmoothQuant
+
+activation-aware GPTQ
+
+W8A8
+
+compressed-tensors
+
+Hygon K100AI
+
+SGLang
+
+相关实现。
+
+如果公开代码里已经有：
+
+Qwen3.8-27B
+SmoothQuant + GPTQ
+W8A8
+
+实现，
+
+优先复用成熟算法，
+
+不要完全重新发明 GPTQ。
+
+# 29. 最终量化模型启动
+
+首先尝试保持我现在的启动方式：
+
+HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server 
+--model-path /home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8 
+--host 0.0.0.0 
+--port 30000 
+--tp-size 4 
+--page-size 64 
+--disable-radix-cache
+
+如果当前 SGLang 需要明确指定：
+
+--quantization w8a8_int8
+
+或者其他参数，
+
+根据当前源码实际情况添加。
+
+例如：
+
+HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server 
+--model-path /home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8 
+--host 0.0.0.0 
+--port 30000 
+--tp-size 4 
+--page-size 64 
+--disable-radix-cache 
+--quantization w8a8_int8
+
+但是：
+
+不要凭记忆直接使用这个参数。
+
+必须先根据：
+
+当前安装的 SGLang
+
+确认真正支持的参数。
+
+# 30. 不改变我的测试条件
+
+第一阶段不要偷偷增加：
+
+speculative decoding
+
+radix cache
+
+FP8 KV Cache
+
+DFlash
+
+MTP
+
+EAGLE
+
+CUDA Graph参数
+
+来制造“量化后更快”。
+
+因为我要先测：
+
+纯粹由于量化带来的速度提升。
+
+所以第一阶段：
+
+BF16
+
+和：
+
+W8A8
+
+必须使用几乎完全一样的 launch 参数。
+
+# 31. 第二阶段性能优化
+
+只有确认：
+
+Enhanced W8A8
+
+精度达到目标以后，
+
+才允许继续研究：
+
+FP8 KV Cache
+
+MTP
+
+DFlash2
+
+EAGLE
+
+Radix Cache
+
+Piecewise CUDA Graph
+
+K100AI专用kernel
+
+进行第二阶段推理加速。
+
+这些属于：
+
+Inference Optimization
+
+不能与第一阶段量化效果混淆。
+
+# 32. 必须保存完整结果
+
+生成：
+
+/home/acceleration/quantization/benchmarks/results.csv
+
+字段至少包括：
+
+model
+quant_method
+int8_coverage
+bf16_layers
+smoothquant_alpha
+calibration_samples
+KLD
+top1_agreement
+PPL
+GSM8K
+MMLU
+code_score
+TTFT
+TPOT
+single_user_tok_s
+concurrency4_tok_s
+concurrency8_tok_s
+GPU_memory_GB
+model_size_GB
+
+# 33. 最终必须给出结论
+
+最终告诉我：
+
+BF16：
+
+速度多少
+
+精度多少
+
+显存多少
+
+普通 W8A8：
+
+速度多少
+
+精度多少
+
+显存多少
+
+Enhanced W8A8：
+
+速度多少
+
+精度多少
+
+显存多少。
+
+然后明确告诉我：
+
+Enhanced W8A8 是否真正实现：
+
+“速度不低于普通 W8A8，同时精度更接近 BF16”。
+
+如果没有达到：
+
+不要伪造结论。
+
+继续从：
+
+SmoothQuant alpha
+
+GPTQ rounding
+
+sensitive layer exclusion
+
+三个方向调整。
+
+# 34. 最终交付
+
+最终必须产生：
+
+/home/acceleration/quantization/Qwen3.8-27B-Enhanced-W8A8/
+
+/home/acceleration/quantization/scripts/quantize.py
+
+/home/acceleration/quantization/scripts/calibrate.py
+
+/home/acceleration/quantization/scripts/compare_logits.py
+
+/home/acceleration/quantization/scripts/benchmark_sglang.py
+
+/home/acceleration/quantization/benchmarks/results.csv
+
+/home/acceleration/quantization/logs/
+
+并给出一条最终启动命令。
+
+# 35. 现在开始
+
+不要给我写长篇教程。
+
+不要重新搭环境。
+
+不要让我安装已经存在的软件。
+
+不要修改我的原始模型。
+
+直接执行：
+
+第一步：
+
+检查当前 Python 环境和 SGLang 支持的量化 backend。
+
+第二步：
+
+检查 Qwen3.8-27B 模型 architecture 和 Linear module。
+
+第三步：
+
+跑 BF16 benchmark。
+
+第四步：
+
+实现：
+
+SmoothQuant + Activation-aware GPTQ W8A8。
+
+第五步：
+
+生成多个少量候选。
+
+第六步：
+
+快速 KLD / Top-1 筛选。
+
+第七步：
+
+生成最终模型。
+
+第八步：
+
+使用 GPU 4,5,6,7 TP4 启动并 benchmark。
+
+只有实测结果才能作为最终结论。
