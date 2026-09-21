@@ -15,6 +15,7 @@
 Qwen3.8-27B-W8A8-Quantization/
 ├── README.md
 ├── docs/
+│   ├── SETUP.md
 │   ├── QUANTIZATION_METHOD.md
 │   ├── USAGE.md
 │   ├── STARTUP.md
@@ -69,6 +70,7 @@ HIP_VISIBLE_DEVICES=4,5,6,7 python -m sglang.launch_server \
 
 详细说明见：
 
+- [环境配置教程](docs/SETUP.md) ⬅️ **新文档**
 - [量化方法](docs/QUANTIZATION_METHOD.md)
 - [使用方法](docs/USAGE.md)
 - [启动方法](docs/STARTUP.md)
